@@ -95,6 +95,8 @@
         const controls = new OrbitControls(camera, renderer.domElement)
         //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
         controls.enableDamping = true
+        //смешение центра точки
+        controls.target.set(0, 20, 0)
         //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
         controls.update()
         //минимальная дистанция приближения
@@ -136,6 +138,9 @@
          *
          */
         //настройка модели
+        // https://threejs.org/docs/index.html#manual/en/introduction/Loading-3D-models
+        // https://discoverthreejs.com/ - полезно почитать
+        // https://discoverthreejs.com/book/first-steps/load-models/ - полезно почитать
         //используем GLTFLoader для загрузки glTF модели
         const loader = new GLTFLoader()
         //загрузка модели
@@ -147,6 +152,7 @@
             //добавляем на сцену
             scene.add(gltf.scene)
           },
+          undefined,
           //если ошибка выводим информацию
           function (error) {
             console.log("Error: " + error)
