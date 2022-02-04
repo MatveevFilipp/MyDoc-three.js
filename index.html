@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>model</title>
+  </head>
+  <!-- стили -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <body>
+    <!-- контейнер для обьекта -->
+    <div class="container"></div>
+
+    <!-- библиотека threejs -->
+    <script src="build/three.min.js"></script>
+
+    <!-- основной код модели -->
+    <script type="module">
+      // импорт нужных библиотек
+      import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
+      import { GLTFLoader } from "./examples/jsm/loaders/GLTFLoader.js"
+
+      // переменная для управления сценой
+      let scene
+      // переменная для управления камерой
+      let camera
+      // переменная для рендаринга - процесс получения изображения
+      let renderer
+
+      // основная функция
+      function init() {
+        // переменная для работы с контейнером
+        let container = document.querySelector(".container")
+
+        /*
+         *
+         */
+        // создали сцену и отправили её в переменную
+        scene = new THREE.Scene()
+        // цвет сцены
+        scene.background = new THREE.Color("#bbb")
+
+        /*
+         *
+         */
+        // настройка камеры
+        /*
+        PerspectiveCamera - режим проецирования предназначен для имитации того, как видит человеческий глаз.
+
+        PerspectiveCamera(fov, aspect, near, far)
+          fov — усеченное вертикальное поле зрения камеры. Угол обзора
+          aspect — усеченное соотношение сторон камеры. Соотношение сторон width / height
+          near — усеченная камера рядом с плоскостью. Максимально близкое отображение обьекта
+          far — усеченная камера в дали от плоскости. Дальность видимости
+        */
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000)
+        //позиции камеры
+        //console.log(camera.position)
+        camera.position.z = 60
+        camera.position.y = 60
+        camera.position.x = 100
+
+        /*
+         *
+         */
+        //создаем рендер
+        //antialias - выполнять ли сглаживание? Значение по умолчанию — false
+        renderer = new THREE.WebGLRenderer({ antialias: true })
+        //установка размера холста
+        /*
+        setSize(width,height,updateStyle:логическое значение )
+        Изменяет размер выходного холста на (ширину, высоту) с учетом соотношения пикселей устройства, а также устанавливает область просмотра в соответствии с этим размером. Установка для updateStyle значения false предотвращает любые изменения стиля выходного холста.
+        */
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        //стандартная строка для отрисовкиполученного рендера на нужном холсе
+        container.appendChild(renderer.domElement)
+
+        /*
+         *
+         */
+        //управление орбитой - позволяем камере вращаться вокруг обьекта
+        /*
+        OrbitControls(object : Camera, domElement : HTMLDOMElement )
+          object — обязательно камера
+          domElement — элемент HTML, используемый для прослушивателей событий
+        */
+        const controls = new OrbitControls(camera, renderer.domElement)
+        //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
+        controls.enableDamping = true
+        //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
+        controls.update()
+        //минимальная дистанция приближения
+        controls.minDistance = 100
+        //максимальная дистанция приближения
+        controls.maxDistance = 900
+
+        /*
+         *
+         */
+        //настройка освещения
+        //настройка глобального света
+        /*
+        AmbientLight(color : Integer, intensity : Float )
+          color - Цвет. По умолчанию 0xffffff
+          intensity - Интенсивность. По умолчанию 1
+        */
+        const ambient = new THREE.AmbientLight(0xffffff, 1)
+        //добавление на сцену
+        scene.add(ambient)
+
+        //настройка света, который испускается из одной точки во всех направлениях.
+        /*
+        PointLight(color : Integer, intensity : Float, distance : Number, decay : Float )
+          color - Цвет. По умолчанию 0xffffff.
+          intensity - Интенсивность. По умолчанию 1.
+          distance - Расстояние - максимальный диапазон света. По умолчанию 0 (без ограничений).
+          decay - тускнеет на расстоянии света. По умолчанию 1. Для физически правильного освещения установить на 2.
+        */
+        let light = new THREE.PointLight(0xc4c4c4, 1, 0)
+        light.position.set(200, 300, 500)
+        scene.add(light)
+        //настройка света, аналогично выше
+        let light2 = new THREE.PointLight(0xc4c4c4, 1, 0)
+        light2.position.set(500, 300, 500)
+        scene.add(light2)
+
+        /*
+         *
+         */
+        //настройка модели
+        //используем GLTFLoader для загрузки glTF модели
+        const loader = new GLTFLoader()
+        //загрузка модели
+        loader.load(
+          //адрес модели URL
+          "model/scene.gltf",
+          // функция gltf необхадима при загрузке ресурса
+          gltf => {
+            //добавляем на сцену
+            scene.add(gltf.scene)
+          },
+          //если ошибка выводим информацию
+          function (error) {
+            console.log("Error: " + error)
+          }
+        )
+
+        /*
+         *
+         */
+        //изменение размера модели при изменении размера окна
+        /*
+        addEventListener(type, listener[, options]);
+          type - тип обрабатываемого события (resize - срабатывает при изменении размера окна)
+          listener - Объект, который принимает уведомление, когда событие указанного типа произошло
+        */
+        window.addEventListener("resize", onWindowResize)
+        //функция которая отрабатывает при изменении размера окна
+        function onWindowResize() {
+          //вычисляем значения для камеры
+          camera.aspect = window.innerWidth / window.innerHeight
+          camera.updateProjectionMatrix()
+          //рендерим новый размер
+          renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+
+        /*
+         *
+         */
+        //функция анимации
+        function animate() {
+          //вызываем указанную функцию для обновления анимации
+          requestAnimationFrame(animate)
+          //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
+          controls.update()
+          //рендарим сцену или другой тип объекта, используя камеру
+          renderer.render(scene, camera)
+        }
+        //запускаем анимацию
+        animate()
+      }
+      //запускаем модель
+      init()
+    </script>
+  </body>
+</html>
