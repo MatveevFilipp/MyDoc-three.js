@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>model</title>
+  </head>
+  <!-- стили -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <body>
+    <!-- контейнер для обьекта -->
+    <div class="container"></div>
+
+    <!-- библиотека threejs -->
+    <script src="build/three.min.js"></script>
+
+    <!-- основной код модели -->
+    <script type="module">
+      // импорт нужных библиотек
+      import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
+      import { GLTFLoader } from "./examples/jsm/loaders/GLTFLoader.js"
+
+      // переменная для управления сценой
+      let scene
+      // переменная для управления камерой
+      let camera
+      // переменная для рендаринга - процесс получения изображения
+      let renderer
+      // константа анимации
+      const mixers = []
+      // время - для анимации
+      const clock = new THREE.Clock()
+
+      // основная функция
+      function init() {
+        // переменная для работы с контейнером
+        let container = document.querySelector(".container")
+
+        /*
+         *
+         */
+        // создали сцену и отправили её в переменную
+        scene = new THREE.Scene()
+        // цвет сцены
+        scene.background = new THREE.Color("#bbb")
+        // Добавляем помощь сетки на сцену
+        //scene.add(new THREE.GridHelper(500, 40))
+        //создаем пол / сетку
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(800, 800),
+          //https://threejs.org/docs/index.html?q=MeshPhongMaterial#api/en/materials/MeshPhongMaterial
+          new THREE.MeshLambertMaterial({ color: "rgb(240,240,240)" })
+        )
+        //поворот
+        ground.rotation.x = -Math.PI / 2
+        //позволяем получать тени
+        ground.receiveShadow = true
+        scene.add(ground)
+
+        /*
+         *
+         */
+        // настройка камеры
+        /*
+        PerspectiveCamera - режим проецирования предназначен для имитации того, как видит человеческий глаз.
+
+        PerspectiveCamera(fov, aspect, near, far)
+          fov — усеченное вертикальное поле зрения камеры. Угол обзора
+          aspect — усеченное соотношение сторон камеры. Соотношение сторон width / height
+          near — усеченная камера рядом с плоскостью. Максимально близкое отображение обьекта
+          far — усеченная камера в дали от плоскости. Дальность видимости
+        */
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000)
+        //позиции камеры
+        //console.log(camera.position)
+        camera.position.z = 100
+        camera.position.y = 80
+        camera.position.x = 160
+
+        /*
+         *
+         */
+        //создаем рендер
+        //antialias - выполнять ли сглаживание? Значение по умолчанию — false
+        renderer = new THREE.WebGLRenderer({})
+        //установка размера холста
+        /*        
+        setSize(width,height,updateStyle:логическое значение )
+        Изменяет размер выходного холста на (ширину, высоту) с учетом соотношения пикселей устройства, а также устанавливает область просмотра в соответствии с этим размером. Установка для updateStyle значения false предотвращает любые изменения стиля выходного холста.
+        */
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        //включаем рендер теней
+        renderer.shadowMap.enabled = true
+        //стандартная строка для отрисовкиполученного рендера на нужном холсе
+        container.appendChild(renderer.domElement)
+
+        /*
+         *
+         */
+        //управление орбитой - позволяем камере вращаться вокруг обьекта
+        /*
+        OrbitControls(object : Camera, domElement : HTMLDOMElement )
+          object — обязательно камера
+          domElement — элемент HTML, используемый для прослушивателей событий
+        */
+        const controls = new OrbitControls(camera, renderer.domElement)
+        //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
+        controls.enableDamping = true
+        //смешение центра точки
+        controls.target.set(0, 40, 0)
+        //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
+        controls.update()
+        //минимальная дистанция приближения
+        controls.minDistance = 100
+        //максимальная дистанция приближения
+        controls.maxDistance = 900
+
+        /*
+         *
+         */
+
+        //настройка освещения
+        //настройка глобального света
+        /*
+        AmbientLight(color : Integer, intensity : Float )
+          color - Цвет. По умолчанию 0xffffff
+          intensity - Интенсивность. По умолчанию 1
+        */
+        const ambient = new THREE.AmbientLight(0xffffff, 0.25)
+        //добавление на сцену
+        scene.add(ambient)
+
+        //настройка света, который испускается из одной точки во всех направлениях.
+        //https://threejs.org/examples/#webgl_lights_spotlight
+        //https://threejs.org/examples/#webgl_lights_hemisphere
+        //DirectionalLight - Свет, который испускается в определенном направлении. Этот свет будет вести себя так, как если бы он был бесконечно далек и все лучи, исходящие от него, параллельны. Общее применение для этого является симулировать дневной свет; Солнце достаточно далеко от того, что его положение можно считать бесконечным, и все лучи света, исходящие из него параллельны.
+        const dirLight = new THREE.DirectionalLight("rgb(255,234,229)", 1)
+        //позиция
+        dirLight.position.set(1000, 2000, 1000)
+        scene.add(dirLight)
+        //бросает тень
+        dirLight.castShadow = true
+        //Настройте свойства тени для света
+        dirLight.shadow.mapSize.width = 2048
+        dirLight.shadow.mapSize.height = 2048
+        dirLight.shadow.camera.near = 0.5
+        //дальность
+        dirLight.shadow.camera.far = 5000
+        //настройки взгляда света на мир
+        const d = 500
+        dirLight.shadow.camera.left = -d
+        dirLight.shadow.camera.right = d
+        dirLight.shadow.camera.top = d
+        dirLight.shadow.camera.bottom = -d
+        //отображение помощи света
+        const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 10)
+        scene.add(dirLightHelper)
+
+        /*
+         *
+         */
+        //настройка модели
+        // https://threejs.org/docs/index.html#manual/en/introduction/Loading-3D-models
+        // https://discoverthreejs.com/ - полезно почитать
+        // https://discoverthreejs.com/book/first-steps/load-models/ - полезно почитать
+        //используем GLTFLoader для загрузки glTF модели
+        const loader = new GLTFLoader()
+        //загрузка модели
+        loader.load(
+          //адрес модели URL
+          "model/gltf/Flamingo.glb",
+          // функция gltf необхадима при загрузке ресурса
+          gltf => {
+            //переменная для управления обьектом
+            const model1 = gltf.scene.children[0]
+            //редактируем позицию
+            model1.position.x = 0
+            model1.position.y = 100
+            //тень
+            model1.castShadow = true
+            model1.receiveShadow = true
+            //добавляем на сцену gltf
+            scene.add(model1)
+            //выводим все свойства обьекта
+            console.dir(gltf)
+
+            //добавляем анимацию
+            const mixer1 = new THREE.AnimationMixer(model1)
+            //выбираем 1 анимацию
+            mixer1.clipAction(gltf.animations[0]).play()
+            //добавляем в mixers
+            mixers.push(mixer1)
+          },
+          undefined,
+          //если ошибка выводим информацию
+          function (error) {
+            console.log("Error: " + error)
+          }
+        )
+
+        /*
+         *
+         */
+        //изменение размера модели при изменении размера окна
+        /*
+        addEventListener(type, listener[, options]);
+          type - тип обрабатываемого события (resize - срабатывает при изменении размера окна)
+          listener - Объект, который принимает уведомление, когда событие указанного типа произошло
+        */
+        window.addEventListener("resize", onWindowResize)
+        //функция которая отрабатывает при изменении размера окна
+        function onWindowResize() {
+          //вычисляем значения для камеры
+          camera.aspect = window.innerWidth / window.innerHeight
+          camera.updateProjectionMatrix()
+          //рендерим новый размер
+          renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+
+        /*
+         *
+         */
+        //функция анимации
+        function animate() {
+          //вызываем указанную функцию для обновления анимации
+          requestAnimationFrame(animate)
+          //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
+          controls.update()
+
+          //перебираем все анимации mixers
+          const delta = clock.getDelta()
+          for (const mixer of mixers) mixer.update(delta)
+
+          //рендарим сцену или другой тип объекта, используя камеру
+          renderer.render(scene, camera)
+        }
+        //запускаем анимацию
+        animate()
+      }
+      //запускаем модель
+      init()
+    </script>
+  </body>
+</html>
