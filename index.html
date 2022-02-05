@@ -64,9 +64,9 @@
         camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000)
         //позиции камеры
         //console.log(camera.position)
-        camera.position.z = 60
-        camera.position.y = 60
-        camera.position.x = 100
+        camera.position.z = 100
+        camera.position.y = 80
+        camera.position.x = 160
 
         /*
          *
@@ -146,11 +146,18 @@
         //загрузка модели
         loader.load(
           //адрес модели URL
-          "model/fox/scene.gltf",
+          "model/gltf/Flamingo.glb",
           // функция gltf необхадима при загрузке ресурса
           gltf => {
-            //добавляем на сцену
-            scene.add(gltf.scene)
+            //добавляем на сцену gltf
+            //переменная для управления обьектом
+            const model1 = gltf.scene.children[0]
+            //редактируем позицию
+            model1.position.x = 0
+            model1.position.y = 100
+            scene.add(model1)
+            //выводим все свойства обьекта
+            //console.dir(gltf)
           },
           undefined,
           //если ошибка выводим информацию
