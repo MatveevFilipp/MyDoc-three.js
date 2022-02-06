@@ -7,3 +7,4 @@
 - anim.html - работа с анимацией
   - animS.html - несколько анимаций
   - animS2.html - несколько анимаций
+- orbitControls.html - управление орбитой
