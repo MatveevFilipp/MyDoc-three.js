@@ -73,7 +73,9 @@
         controls.enableDamping = true
         //настройка плавности (enableDamping = true - обязательно) от 0 до 1
         controls.dampingFactor = 0.08
-        //смешение центра точки
+        //возможность сдвинуть цент наблюдения
+        controls.enablePan = false
+        //смешение точки центра наблюдения
         controls.target.set(0, 40, 0)
         //минимальная дистанция приближения
         controls.minDistance = 100
@@ -87,6 +89,8 @@
         //controls.autoRotate = true
         //скорость автоповорота
         //controls.autoRotateSpeed = -1
+        //Включает или отключает использование управления от клавиатуры.
+        controls.enableKeys = false
         //возможность управлять на стрелки
         controls.listenToKeyEvents(window)
         //настройка клавишь (по стандарту)
@@ -188,7 +192,7 @@
 
         function animate() {
           requestAnimationFrame(animate)
-          //необходим для работы с OrbitControls
+          //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
           controls.update()
 
           const delta = clock.getDelta()

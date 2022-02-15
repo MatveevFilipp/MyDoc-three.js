@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>model</title>
+  </head>
+  <!-- стили -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <body>
+    <!-- контейнер для обьекта -->
+    <div class="container"></div>
+
+    <!-- библиотека threejs -->
+    <script src="build/three.min.js"></script>
+
+    <!-- основной код модели -->
+    <script type="module">
+      // импорт нужных библиотек
+      import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
+      // import { GLTFLoader } from "./examples/jsm/loaders/GLTFLoader.js"
+      //возможность блокировать камеру
+      import { PointerLockControls } from "./examples/jsm/controls/PointerLockControls.js"
+
+      let scene
+      let camera
+      let renderer
+      const clock = new THREE.Clock()
+      let controls
+      //для настройки скорости движения
+      let distance = 2
+
+      //переменные для работы с клавиатурой
+      let UpW = false
+      let LeftA = false
+      let DownS = false
+      let RightD = false
+
+      function init() {
+        let container = document.querySelector(".container")
+
+        scene = new THREE.Scene()
+        scene.background = new THREE.Color("#bbb")
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(800, 800),
+          new THREE.MeshLambertMaterial({ color: "rgb(240,240,240)" })
+        )
+        ground.rotation.x = -Math.PI / 2
+        ground.receiveShadow = true
+        scene.add(ground)
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000)
+        //тип 1 сдвиг камеры от точки
+        camera.position.set(0, 100, 300)
+        /*
+        camera.position.x = 0
+        camera.position.y = 0
+        camera.position.z = 0
+        */
+
+        renderer = new THREE.WebGLRenderer({})
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.shadowMap.enabled = true
+        container.appendChild(renderer.domElement)
+
+        //добавим зеленый куб размером 100 на 100 на 100
+        var cube = new THREE.Mesh(
+          new THREE.BoxGeometry(40, 40, 40),
+          /*
+          MeshBasicMaterial — просто назначает любой цвет примитиву
+          MeshNormalMaterial — материал со свойствами shading, совмещает в себе смешение цветов.
+          MeshDepthMaterial — материал со свойствами wireframe, выглядит черно-белым
+          MeshLambertMaterial — материал для не блестящих поверхностей
+          MeshPhongMaterial — материал для блестящих поверхностей
+          MeshFaceMaterial — может комбинировать другие виды материалов назначать на каждый полигон свой материал.
+          */
+          new THREE.MeshLambertMaterial({ color: 0x00ff00 })
+        )
+
+        scene.add(cube)
+        //позиция куба
+        cube.position.set(0, 20, 0)
+        //поворот куба
+        cube.rotation.set(0, 0, 0)
+        //отбрасывает тень
+        cube.castShadow = true
+
+        //добавляем красный куб
+        var cube2 = new THREE.Mesh(
+          new THREE.BoxGeometry(40, 40, 40),
+          new THREE.MeshLambertMaterial({ color: 0xff0000 })
+        )
+        cube2.position.set(-80, 20, 0)
+        scene.add(cube2)
+        cube2.castShadow = true
+
+        /*
+         *
+         */
+        //управление орбитой - позволяем камере вращаться вокруг обьекта
+        /*
+        OrbitControls(object : Camera, domElement : HTMLDOMElement )
+          object — обязательно камера
+          domElement — элемент HTML, используемый для прослушивателей событий
+        */
+        const controls = new OrbitControls(camera, renderer.domElement)
+        //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
+        controls.enableDamping = true
+        //настройка плавности (enableDamping = true - обязательно) от 0 до 1
+        controls.dampingFactor = 0.05
+        //возможность сдвинуть цент наблюдения
+        controls.enablePan = false
+        //Включает или отключает использование управления от клавиатуры.
+        controls.enableKeys = false
+        //минимальная дистанция приближения
+        controls.minDistance = 100
+        //максимальная дистанция приближения
+        controls.maxDistance = 600
+        //минимальный угол наклона дистанции от 0 до Math.PI (0 - самый верх)
+        controls.minPolarAngle = 0
+        //максимальный угол наклона дистанции от 0 до Math.PI (Math.PI - самый низ)
+        controls.maxPolarAngle = Math.PI * 0.499
+
+        //возможность заблокировать камеру
+        const controlsLock = new PointerLockControls(camera, document.body)
+        //при клике блокируем мыш
+        container.addEventListener("click", () => {
+          //  controlsLock.lock()
+        })
+
+        /*
+         *
+         */
+        //движение камеры от 3 лица
+        //создаем обьект для манипулирования кубом и камерой
+        var сubeСameraObject = new THREE.Object3D()
+        //добавляем куб
+        сubeСameraObject.add(cube)
+        //добавляем камеру
+        сubeСameraObject.add(camera)
+        //всё на сцену
+        scene.add(сubeСameraObject)
+
+        //
+        //
+        //клавиатура удержание
+        //https://learn.javascript.ru/keyboard-events
+        const onKeyDown = function (event) {
+          switch (event.code) {
+            case "ArrowUp":
+            case "KeyW":
+              UpW = true
+              break
+
+            case "ArrowLeft":
+            case "KeyA":
+              LeftA = true
+              break
+
+            case "ArrowDown":
+            case "KeyS":
+              DownS = true
+              break
+
+            case "ArrowRight":
+            case "KeyD":
+              RightD = true
+              break
+
+            case "ShiftLeft":
+              distance = 6
+              break
+
+            case "ControlLeft":
+              distance = 0.5
+              break
+          }
+        }
+        document.addEventListener("keydown", onKeyDown)
+
+        //клавиатура отпускание
+        const onKeyUp = function (event) {
+          switch (event.code) {
+            case "ArrowUp":
+            case "KeyW":
+              UpW = false
+              break
+
+            case "ArrowLeft":
+            case "KeyA":
+              LeftA = false
+              break
+
+            case "ArrowDown":
+            case "KeyS":
+              DownS = false
+              break
+
+            case "ArrowRight":
+            case "KeyD":
+              RightD = false
+              break
+
+            case "ShiftLeft":
+              distance = 2
+              break
+
+            case "ControlLeft":
+              distance = 2
+              break
+          }
+        }
+        document.addEventListener("keyup", onKeyUp)
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.25)
+        scene.add(ambient)
+
+        const dirLight = new THREE.DirectionalLight("rgb(255,234,229)", 1)
+        dirLight.position.set(1000, 2000, 1000)
+        scene.add(dirLight)
+        dirLight.castShadow = true
+        dirLight.shadow.mapSize.width = 2048
+        dirLight.shadow.mapSize.height = 2048
+        dirLight.shadow.camera.near = 0.5
+        dirLight.shadow.camera.far = 5000
+        const d = 500
+        dirLight.shadow.camera.left = -d
+        dirLight.shadow.camera.right = d
+        dirLight.shadow.camera.top = d
+        dirLight.shadow.camera.bottom = -d
+        /*
+        const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 10)
+        scene.add(dirLightHelper)
+        */
+
+        //
+        //возможность блокировать камеру
+        //controls = new PointerLockControls(camera, renderer.domElement)
+
+        //движение в направлении камеры
+        //Когда у вас есть direction вектор, вы можете использовать его для перемещения камеры в нужном направлении:
+        let direction = new THREE.Vector3()
+        //создадим вектора для каждого направления
+        let directionUpW = new THREE.Vector3()
+        let directionDownS = new THREE.Vector3()
+        let directionLeftA = new THREE.Vector3()
+        let directionRightD = new THREE.Vector3()
+        //создадим вектор суммы
+        let directionSumm = new THREE.Vector3()
+        //копируем вектор направления камеры в вектор direction
+        //camera.getWorldDirection(direction)
+
+        window.addEventListener("resize", onWindowResize)
+        function onWindowResize() {
+          camera.aspect = window.innerWidth / window.innerHeight
+          camera.updateProjectionMatrix()
+          renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+
+        function animate() {
+          requestAnimationFrame(animate)
+
+          const delta = clock.getDelta()
+
+          //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
+          controls.update()
+
+          //устанавливаем слежение камеры за обьектом
+          //camera.lookAt(сubeСameraObject.position)
+          //или
+          camera.lookAt(сubeСameraObject.position.x, сubeСameraObject.position.y + 50, сubeСameraObject.position.z)
+
+          //если хоть одна клавиша нажата
+          if (UpW || DownS || LeftA || RightD) {
+            //считаем куда смотрит камера и передаем все значения в вектор
+            camera.getWorldDirection(direction)
+            //зануляем вектор y для движение по y
+            direction.y = 0
+
+            //нажата клавиша вперед
+            if (UpW) {
+              //добавляем вектор к текушему
+              directionUpW = direction
+              //ссумируем все вектора
+              directionSumm.add(directionUpW)
+            }
+            if (DownS) {
+              //отразить вектор
+              //direction.negate()
+              directionDownS.x = -direction.x
+              directionDownS.z = -direction.z
+              //ссумируем все вектора
+              directionSumm.add(directionDownS)
+            }
+            if (LeftA) {
+              // поворот вектора на лево
+              directionLeftA.x = direction.z
+              directionLeftA.z = -direction.x
+              directionSumm.add(directionLeftA)
+            }
+            if (RightD) {
+              // поворот вектора на право
+              directionRightD.x = -direction.z
+              directionRightD.z = direction.x
+              //ссумируем все вектора
+              directionSumm.add(directionRightD)
+            }
+            //делаем движение во все направление равным (не зависимым от наклона камеры)
+            directionSumm.normalize()
+            //перемешение
+            //вариант 1
+            //перемешение без настроек
+            //перемещаем обьект в направление вектора direction
+            //сubeСameraObject.position.add(direction)
+            //вариант 2
+            //перемешение с настройкой
+            //Если хотите переместиться быстрее, вы можете, использовать multiplyScalarметод из THREE.Vector3 класса и умножить на желаемое расстояние.
+            сubeСameraObject.position.add(directionSumm.multiplyScalar(distance))
+            //зануляем вектор
+            /*
+            можно и умножать для плавности
+            directionSumm.x *= 0.1
+            directionSumm.z *= 0.1
+            */
+            directionSumm.x = 0
+            directionSumm.z = 0
+          }
+
+          //ограничиваем область куба
+          if (сubeСameraObject.position.x > 380) {
+            сubeСameraObject.position.x = 380
+          }
+          if (сubeСameraObject.position.x < -380) {
+            сubeСameraObject.position.x = -380
+          }
+          if (сubeСameraObject.position.z > 380) {
+            сubeСameraObject.position.z = 380
+          }
+          if (сubeСameraObject.position.z < -380) {
+            сubeСameraObject.position.z = -380
+          }
+
+          renderer.render(scene, camera)
+        }
+        animate()
+      }
+      init()
+    </script>
+  </body>
+</html>

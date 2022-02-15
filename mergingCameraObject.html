@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>model</title>
+  </head>
+  <!-- стили -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <body>
+    <!-- контейнер для обьекта -->
+    <div class="container"></div>
+
+    <!-- библиотека threejs -->
+    <script src="build/three.min.js"></script>
+
+    <!-- основной код модели -->
+    <script type="module">
+      // импорт нужных библиотек
+      // import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
+      // import { GLTFLoader } from "./examples/jsm/loaders/GLTFLoader.js"
+
+      let scene
+      let camera
+      let renderer
+      const mixers = []
+      const clock = new THREE.Clock()
+
+      function init() {
+        let container = document.querySelector(".container")
+
+        scene = new THREE.Scene()
+        scene.background = new THREE.Color("#bbb")
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(800, 800),
+          new THREE.MeshLambertMaterial({ color: "rgb(240,240,240)" })
+        )
+        ground.rotation.x = -Math.PI / 2
+        ground.receiveShadow = true
+        scene.add(ground)
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000)
+
+        //тип 1 сдвиг камеры от точки
+        camera.position.set(0, 100, 300)
+        /*
+        camera.position.x = 0
+        camera.position.y = 0
+        camera.position.z = 0
+        */
+        renderer = new THREE.WebGLRenderer({})
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.shadowMap.enabled = true
+        container.appendChild(renderer.domElement)
+
+        //добавим зеленый куб размером 100 на 100 на 100
+        var cube = new THREE.Mesh(
+          new THREE.BoxGeometry(40, 40, 40),
+          /*
+          MeshBasicMaterial — просто назначает любой цвет примитиву
+          MeshNormalMaterial — материал со свойствами shading, совмещает в себе смешение цветов.
+          MeshDepthMaterial — материал со свойствами wireframe, выглядит черно-белым
+          MeshLambertMaterial — материал для не блестящих поверхностей
+          MeshPhongMaterial — материал для блестящих поверхностей
+          MeshFaceMaterial — может комбинировать другие виды материалов назначать на каждый полигон свой материал.
+          */
+          new THREE.MeshLambertMaterial({ color: 0x00ff00 })
+        )
+
+        scene.add(cube)
+        //позиция куба
+        cube.position.set(0, 20, 0)
+        //поворот куба
+        cube.rotation.set(0, 0, 0)
+        //отбрасывает тень
+        cube.castShadow = true
+
+        //добавляем красный куб
+        var cube2 = new THREE.Mesh(
+          new THREE.BoxGeometry(40, 40, 40),
+          new THREE.MeshLambertMaterial({ color: 0xff0000 })
+        )
+        cube2.position.set(-80, 20, 0)
+        scene.add(cube2)
+        cube2.castShadow = true
+
+        /*
+         *
+         */
+        //движение камеры от 3 лица
+        //создаем обьект для дальнейшего манипулирования камерой
+        var cameraObject = new THREE.Object3D()
+        //добавляем в обьект камеру
+        cameraObject.add(camera)
+        //создаем обьект для манипулирования кубом и камерой
+        var сubeСameraObject = new THREE.Object3D()
+        //добавляем куб
+        сubeСameraObject.add(cube)
+        //добавляем камеру
+        сubeСameraObject.add(cameraObject)
+        //тип 2 - сдвиг камеры и ее поворота
+        //cameraObject.position.set(0, 500, 300)
+        var onMouseMove = function (event) {
+          //врашение по горизонтали камеры и куба
+          сubeСameraObject.rotation.y -= event.movementX * 0.002
+          //врешение по вертикали относительно обьекта
+          cameraObject.rotation.x -= event.movementY * 0.002
+          //ограничение в углах наклона
+          //Пример Math.max((максимальный подьем), Math.min((максимум опускание), 000.rotation.x))
+          cameraObject.rotation.x = Math.max(-Math.PI / 2, Math.min(0, cameraObject.rotation.x))
+        }
+        document.addEventListener("mousemove", onMouseMove, false)
+        scene.add(сubeСameraObject)
+        //конец движение камеры от 3 лица
+        //
+        //
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.25)
+        scene.add(ambient)
+
+        const dirLight = new THREE.DirectionalLight("rgb(255,234,229)", 1)
+        dirLight.position.set(1000, 2000, 1000)
+        scene.add(dirLight)
+        dirLight.castShadow = true
+        dirLight.shadow.mapSize.width = 2048
+        dirLight.shadow.mapSize.height = 2048
+        dirLight.shadow.camera.near = 0.5
+        dirLight.shadow.camera.far = 5000
+        const d = 500
+        dirLight.shadow.camera.left = -d
+        dirLight.shadow.camera.right = d
+        dirLight.shadow.camera.top = d
+        dirLight.shadow.camera.bottom = -d
+        /*
+        const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 10)
+        scene.add(dirLightHelper)
+        */
+
+        window.addEventListener("resize", onWindowResize)
+        function onWindowResize() {
+          camera.aspect = window.innerWidth / window.innerHeight
+          camera.updateProjectionMatrix()
+          renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+
+        function animate() {
+          requestAnimationFrame(animate)
+
+          const delta = clock.getDelta()
+
+          renderer.render(scene, camera)
+        }
+        animate()
+      }
+      init()
+    </script>
+  </body>
+</html>

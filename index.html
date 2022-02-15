@@ -93,12 +93,8 @@
           domElement — элемент HTML, используемый для прослушивателей событий
         */
         const controls = new OrbitControls(camera, renderer.domElement)
-        //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
-        controls.enableDamping = true
         //смешение центра точки
         controls.target.set(0, 30, 0)
-        //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
-        controls.update()
         //минимальная дистанция приближения
         controls.minDistance = 100
         //максимальная дистанция приближения
@@ -192,8 +188,6 @@
         function animate() {
           //вызываем указанную функцию для обновления анимации
           requestAnimationFrame(animate)
-          //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
-          controls.update()
           //рендарим сцену или другой тип объекта, используя камеру
           renderer.render(scene, camera)
         }

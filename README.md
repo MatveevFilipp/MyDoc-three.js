@@ -8,3 +8,5 @@
   - animS.html - несколько анимаций
   - animS2.html - несколько анимаций
 - orbitControls.html - управление орбитой
+- mergingCameraObject.html - поворот камеры в направлении обьекта без OrbitControls
+- gameCamera.html - камера от 3-го лица и движение
