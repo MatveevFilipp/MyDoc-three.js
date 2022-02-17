@@ -25,7 +25,7 @@
     <!-- основной код модели -->
     <script type="module">
       // импорт нужных библиотек
-      import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
+      // import { OrbitControls } from "./examples/jsm/controls/OrbitControls.js"
       // import { GLTFLoader } from "./examples/jsm/loaders/GLTFLoader.js"
       //возможность блокировать камеру
       import { PointerLockControls } from "./examples/jsm/controls/PointerLockControls.js"
@@ -102,53 +102,41 @@
         scene.add(cube2)
         cube2.castShadow = true
 
-        /*
-         *
-         */
-        //управление орбитой - позволяем камере вращаться вокруг обьекта
-        /*
-        OrbitControls(object : Camera, domElement : HTMLDOMElement )
-          object — обязательно камера
-          domElement — элемент HTML, используемый для прослушивателей событий
-        */
-        const controls = new OrbitControls(camera, renderer.domElement)
-        //При прекращении поворота элемента присутствует плавность. Установите true, чтобы включить.
-        controls.enableDamping = true
-        //настройка плавности (enableDamping = true - обязательно) от 0 до 1
-        controls.dampingFactor = 0.05
-        //возможность сдвинуть цент наблюдения
-        controls.enablePan = false
-        //Включает или отключает использование управления от клавиатуры.
-        controls.enableKeys = false
-        //минимальная дистанция приближения
-        controls.minDistance = 100
-        //максимальная дистанция приближения
-        controls.maxDistance = 600
-        //минимальный угол наклона дистанции от 0 до Math.PI (0 - самый верх)
-        controls.minPolarAngle = 0
-        //максимальный угол наклона дистанции от 0 до Math.PI (Math.PI - самый низ)
-        controls.maxPolarAngle = Math.PI * 0.499
-
         //возможность заблокировать камеру
         const controlsLock = new PointerLockControls(camera, document.body)
         //при клике блокируем мыш
         container.addEventListener("click", () => {
-          //  controlsLock.lock()
+          controlsLock.lock()
         })
 
         /*
          *
          */
         //движение камеры от 3 лица
+        //создаем обьект для дальнейшего манипулирования камерой
+        var cameraObject = new THREE.Object3D()
+        //добавляем в обьект камеру
+        cameraObject.add(camera)
         //создаем обьект для манипулирования кубом и камерой
-        var сubeСameraObject = new THREE.Object3D()
+        var cubeCameraObject = new THREE.Object3D()
         //добавляем куб
-        сubeСameraObject.add(cube)
+        cubeCameraObject.add(cube)
         //добавляем камеру
-        сubeСameraObject.add(camera)
-        //всё на сцену
-        scene.add(сubeСameraObject)
-
+        cubeCameraObject.add(cameraObject)
+        //тип 2 - сдвиг камеры и ее поворота
+        //cameraObject.position.set(0, 500, 300)
+        var onMouseMove = function (event) {
+          //врашение по горизонтали камеры и куба
+          cubeCameraObject.rotation.y -= event.movementX * 0.002
+          //врешение по вертикали относительно обьекта
+          cameraObject.rotation.x -= event.movementY * 0.002
+          //ограничение в углах наклона
+          //Пример Math.max((максимальный подьем), Math.min((максимум опускание), 000.rotation.x))
+          cameraObject.rotation.x = Math.max(-Math.PI / 2, Math.min(0, cameraObject.rotation.x))
+        }
+        document.addEventListener("mousemove", onMouseMove, false)
+        scene.add(cubeCameraObject)
+        //конец движение камеры от 3 лица
         //
         //
         //клавиатура удержание
@@ -271,12 +259,12 @@
           const delta = clock.getDelta()
 
           //обновляем элемент управления. Должно быть вызван после любых ручных изменений в трансформации камеры если есть .autoRotate или .enableDamping
-          controls.update()
+          //controls.update()
 
           //устанавливаем слежение камеры за обьектом
-          //camera.lookAt(сubeСameraObject.position)
+          //camera.lookAt(cubeCameraObject.position)
           //или
-          camera.lookAt(сubeСameraObject.position.x, сubeСameraObject.position.y + 50, сubeСameraObject.position.z)
+          camera.lookAt(cubeCameraObject.position.x, cubeCameraObject.position.y + 50, cubeCameraObject.position.z)
 
           //если хоть одна клавиша нажата
           if (UpW || DownS || LeftA || RightD) {
@@ -319,11 +307,11 @@
             //вариант 1
             //перемешение без настроек
             //перемещаем обьект в направление вектора direction
-            //сubeСameraObject.position.add(direction)
+            //cubeCameraObject.position.add(direction)
             //вариант 2
             //перемешение с настройкой
             //Если хотите переместиться быстрее, вы можете, использовать multiplyScalarметод из THREE.Vector3 класса и умножить на желаемое расстояние.
-            сubeСameraObject.position.add(directionSumm.multiplyScalar(distance))
+            cubeCameraObject.position.add(directionSumm.multiplyScalar(distance))
             //зануляем вектор
             /*
             можно и умножать для плавности
@@ -335,17 +323,17 @@
           }
 
           //ограничиваем область куба
-          if (сubeСameraObject.position.x > 380) {
-            сubeСameraObject.position.x = 380
+          if (cubeCameraObject.position.x > 380) {
+            cubeCameraObject.position.x = 380
           }
-          if (сubeСameraObject.position.x < -380) {
-            сubeСameraObject.position.x = -380
+          if (cubeCameraObject.position.x < -380) {
+            cubeCameraObject.position.x = -380
           }
-          if (сubeСameraObject.position.z > 380) {
-            сubeСameraObject.position.z = 380
+          if (cubeCameraObject.position.z > 380) {
+            cubeCameraObject.position.z = 380
           }
-          if (сubeСameraObject.position.z < -380) {
-            сubeСameraObject.position.z = -380
+          if (cubeCameraObject.position.z < -380) {
+            cubeCameraObject.position.z = -380
           }
 
           renderer.render(scene, camera)
